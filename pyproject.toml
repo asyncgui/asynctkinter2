@@ -1,0 +1,36 @@
+[project]
+name = "asynctkinter2"
+version = "0.1.0"
+description = "Async library for Tkinter"
+authors = [{ name = "Nattōsai Mitō", email = "flow4re2c@gmail.com" }]
+license = "MIT"
+readme = 'README.md'
+requires-python = ">=3.10,<4.0"
+keywords = ["async", "tkinter"]
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "asyncgui>=0.9.3,<0.11",
+]
+[dependency-groups]
+example = [
+    "requests>=2.32.5",
+]
+
+[project.urls]
+Repository = "https://github.com/asyncgui/asynctkinter2"
+
+[build-system]
+requires = ["uv_build>=0.9.2,<0.10.0"]
+build-backend = "uv_build"
