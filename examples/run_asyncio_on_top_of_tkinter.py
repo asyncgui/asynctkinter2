@@ -29,10 +29,10 @@ def main():
         del task
 
         # asyncio
-        # NOTE: I'm not familiar with asyncio, so this part might be incorrect.
+        # NOTE: I'm not familiar with asyncio, this part might be incorrect.
         loop = asyncio.new_event_loop()
         loop.set_debug(True)
-        asyncio.set_event_loop(loop)
+        asyncio.set_event_loop(loop)  # Not sure if this is necessary.
         defer(loop.close)
         defer(loop.stop)
         def process_asyncio(stop=loop.stop, run_forever=loop.run_forever, after=root.after, interval_ms=100):

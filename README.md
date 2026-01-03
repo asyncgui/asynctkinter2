@@ -128,7 +128,7 @@ async def this_does_not_work():
 ``` 
 
 ここで言う "async処理" というのは予約語の `async` や `await` を含む処理だけを指します。
-すなわち以下のasync関数内には `asyncio` に対する処理と `asynctkinter2` に対する処理が混在しているものの、`asynctkinter2` 側は予約語 `async/await` を含んでいないため問題ありません。
+なので以下のコードでは `asyncio` に対する処理と `asynctkinter2` に対する処理が混在しているものの、`asynctkinter2` 側は予約語 `async/await` を含んでいないため問題ありません。
 
 ```python
 async def this_works():
