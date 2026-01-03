@@ -113,3 +113,37 @@ if __name__ == "__main__":
 - タイマー機能に関しても `tkinter` が元々持っている `after()` ではなく独自の物を用いています。
 
 対して `asynctkinter2` では独自の物を用いないようにしています。
+そのおかげで `asyncio` や `trio` といった他のasyncライブラリと共存しやくなっています。
+ただ代償としてフレームレート非依存のアニメーションを書く際の手間が増えます。
+具体的には自身で `time.perf_counter()` 等を用いて経過時間を計測しないといけません。
+
+## `asyncio` との共存
+
+共存といっても何でもできるわけではなく、１つのasync関数内に `asyncio` に対するasync処理と`asynctkinter2` に対するasync処理を混在させることはできません。
+
+```python
+async def this_does_not_work():
+    await asyncio.sleep(1)
+    await asynctkinter2.sleep(widget, 1000)
+``` 
+
+ここで言う "async処理" というのは予約語の `async` や `await` を含む処理だけを指します。
+すなわち以下のasync関数内には `asyncio` に対する処理と `asynctkinter2` に対する処理が混在しているものの、`asynctkinter2` 側は予約語 `async/await` を含んでいないため問題ありません。
+
+```python
+async def this_works():
+    await asyncio.sleep(1)
+    task = asynctkinter2.start(...)
+
+asyncio.create_task(this_works())
+```
+
+以下の例も `asyncio` 側がasync処理ではないので問題ありません。
+
+```python
+async def this_also_works():
+    task = asyncio.create_task(...)
+    await asynctkinter2.sleep(widget, 1000)
+
+asynctkinter2.start(this_also_works())
+```
