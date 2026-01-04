@@ -9,7 +9,12 @@ import tkinter as tk
 import asynctkinter2 as atk
 
 
-def main():
+def main(asyncio_fps=10):
+    '''
+    :param asyncio_fps: asyncioに処理の機会を与える頻度。
+        この値が大きいほどasyncio側の処理の応答性が良くなるが、tkinter側は悪くなる。
+        asyncio側でアニメーションを書いたりしないのであればもっと小さい値(例えば1)で十分だと思う。
+    '''
     root = tk.Tk()
     root.title("Run asyncio on top of tkinter")
     root.geometry("800x400")
@@ -35,12 +40,13 @@ def main():
         asyncio.set_event_loop(loop)  # Not sure if this is necessary.
         defer(loop.close)
         defer(loop.stop)
-        def process_asyncio(stop=loop.stop, run_forever=loop.run_forever, after=root.after, interval_ms=100):
+        interval_ms = int(1000 / asyncio_fps)
+        def process_asyncio(stop=loop.stop, run_forever=loop.run_forever, after=root.after, interval_ms=interval_ms):
             # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_forever
             stop()
             run_forever()
             after(interval_ms, process_asyncio)
-        root.after(100, process_asyncio)
+        root.after(interval_ms, process_asyncio)
         task = loop.create_task(asyncio_anim(root))
         defer(task.cancel)
 

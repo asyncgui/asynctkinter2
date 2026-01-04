@@ -9,7 +9,11 @@ import tkinter as tk
 import asynctkinter2 as atk
 
 
-async def main(*, fps=30):
+async def main(*, tkinter_fps=30):
+    '''
+    :param tkinter_fps: tkinterに処理の機会を与える頻度。
+        この値が大きいほどtkinter側の処理の応答性が良くなるが、asyncio側は悪くなる。
+    '''
     root = tk.Tk()
     root.title("Run tkinter on top of asyncio")
     root.geometry("800x400")
@@ -33,7 +37,7 @@ async def main(*, fps=30):
         try:
             async with asyncio.TaskGroup() as tg:
                 tg.create_task(asyncio_anim(root))
-                sleep_duration = 1.0 / fps
+                sleep_duration = 1.0 / tkinter_fps
                 sleep = asyncio.sleep
                 update = root.update
                 while True:
