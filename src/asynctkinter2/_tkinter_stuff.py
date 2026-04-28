@@ -3,8 +3,7 @@ __all__ = (
 )
 from functools import partial
 from typing import Protocol
-from collections.abc import Awaitable, Iterator, Callable
-from contextlib import contextmanager
+from collections.abc import Awaitable, Callable
 
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
@@ -17,9 +16,9 @@ from asyncgui import ExclusiveEvent, Cancelled
 # Tk Event 
 # ----------------------------------------------------------------------------
 
-def _event_callback(ee: ExclusiveEvent, filter, e: tkinter.Event):
+def _event_callback(callback, filter, e: tkinter.Event):
     if filter is None or filter(e):
-        ee.fire(e)
+        callback(e)
 
 
 async def event(widget, event_name, *, filter=None) -> Awaitable[tkinter.Event]:
@@ -30,15 +29,14 @@ async def event(widget, event_name, *, filter=None) -> Awaitable[tkinter.Event]:
         print(f"{e.x = }, {e.y = }")
     '''
     ee = ExclusiveEvent()
-    bind_id = widget.bind(event_name, partial(_event_callback, ee, filter), "+")
+    bind_id = widget.bind(event_name, partial(_event_callback, ee.fire, filter), "+")
     try:
         return await ee.wait_args_0()
     finally:
         widget.unbind(event_name, bind_id)
 
 
-@contextmanager
-def event_freq(widget, event_name, *, filter=None) -> Iterator[Callable[[], Awaitable[tkinter.Event]]]:
+class event_freq:
     '''
     When handling a frequently occurring event, such as ``<Motion>``, the following kind of code
     may cause performance issues:
@@ -57,13 +55,48 @@ def event_freq(widget, event_name, *, filter=None) -> Iterator[Callable[[], Awai
             while True:
                 e = await mouse_motion()
                 ...
+
+    When listening for a ``<Motion>`` event, you will often also want to listen for a ``<ButtonRelease>`` event,
+    which leads to deeply nested code:
+
+    .. code-block::
+
+        async with move_on_when(event(widget, "<ButtonRelease>", filter=...)):
+            with event_freq(widget, "<Motion>") as mouse_motion:
+                while True:
+                    e = await mouse_motion()
+                    ...
+
+    To mitigate this, ``event_freq`` can also be used as an async context manager, making the above code less nested:
+
+    .. code-block::
+
+        async with (
+            move_on_when(event(widget, "<ButtonRelease>", filter=...)),
+            event_freq(widget, "<Motion>") as mouse_motion,
+        ):
+            while True:
+                e = await mouse_motion()
+                ...
     '''
-    ee = ExclusiveEvent()
-    bind_id = widget.bind(event_name, partial(_event_callback, ee, filter), "+")
-    try:
-        yield ee.wait_args_0
-    finally:
-        widget.unbind(event_name, bind_id)
+    def __init__(self, widget, event_name, *, filter=None):
+        self.widget = widget
+        self.event_name = event_name
+        self.filter = filter
+
+    def __enter__(self):
+        ee = ExclusiveEvent()
+        self.bind_id = self.widget.bind(self.event_name, partial(_event_callback, ee.fire, self.filter), "+")
+        return ee.wait_args_0
+
+    def __exit__(self, *args):
+        self.widget.unbind(self.event_name, self.bind_id)
+
+    async def __aenter__(self):
+        return self.__enter__()
+
+    async def __aexit__(self, *args):
+        return self.__exit__(*args)
 
 
 # ----------------------------------------------------------------------------
