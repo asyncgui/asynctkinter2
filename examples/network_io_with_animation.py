@@ -1,3 +1,7 @@
+'''
+asyncgui 0.11.1 or later is required to run this example.
+'''
+
 import tkinter as tk
 import requests
 import asynctkinter2 as atk
@@ -25,14 +29,13 @@ async def async_main(root: tk.Tk):
     await atk.event(button, "<ButtonPress>")
     button["text"] = "cancel"
 
-    async with (
-        atk.move_on_when(atk.event(button, "<ButtonPress>")) as cancel_tracker,
-        atk.run_as_daemon(run_progress_spinner(
+    async with atk.open_nursery() as nursery:
+        cancel_tracker = nursery.start(atk.event(button, "<ButtonPress>"), daemon=True, close_on_finish=True)
+        nursery.start(run_progress_spinner(
             canvas,
             line_width=(lw := 20),
             bbox=(lw, lw, canvas.winfo_width() - lw, canvas.winfo_height() - lw),
-        )),
-    ):
+        ), daemon=True)
         with requests.Session() as session:
             label["text"] = "first request..."
             await atk.run_in_thread(
