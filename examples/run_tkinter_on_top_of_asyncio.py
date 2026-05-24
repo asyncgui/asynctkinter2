@@ -11,7 +11,8 @@ import asynctkinter2 as atk
 
 async def main(*, tkinter_fps=30):
     '''
-    :param tkinter_fps: tkinterに処理の機会を与える頻度。
+    :param tkinter_fps:
+        tkinterに処理の機会を与える頻度。
         この値が大きいほどtkinter側の処理の応答性が良くなるが、asyncio側は悪くなる。
     '''
     root = tk.Tk()

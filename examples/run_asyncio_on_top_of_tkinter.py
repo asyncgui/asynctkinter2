@@ -11,7 +11,8 @@ import asynctkinter2 as atk
 
 def main(asyncio_fps=10):
     '''
-    :param asyncio_fps: asyncioに処理の機会を与える頻度。
+    :param asyncio_fps:
+        asyncioに処理の機会を与える頻度。
         この値が大きいほどasyncio側の処理の応答性が良くなるが、tkinter側は悪くなる。
         asyncio側でアニメーションを書いたりしないのであればもっと小さい値(例えば1)で十分だと思う。
     '''

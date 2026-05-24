@@ -40,6 +40,7 @@ async def やりたき事(label):
     await atk.event(label, "<ButtonPress>")
     print('C')
 
+# 注意: 現実のコードでは start ではなく structured concurrency 系のAPIを用いるべき。
 atk.start(やりたき事(...))
 ```
 
@@ -47,7 +48,7 @@ atk.start(やりたき事(...))
 
 ## Installation
 
-Pin the minor version.
+マイナーバージョンまでを固定してください。
 
 ```text
 pip install "asynctkinter2>=0.1,<0.2"
@@ -108,13 +109,12 @@ if __name__ == "__main__":
 
 ## `asynctkinter` との違い
 
-現在の[asynctkinter](https://github.com/asyncgui/asynctkinter)は
+[asynctkinter](https://github.com/asyncgui/asynctkinter)は
 
 - メインループは `tkinter` が元々持っている `mainloop()` ではなく独自の物を用い
 - タイマー機能に関しても `tkinter` が元々持っている `after()` ではなく独自の物を用いています。
 
 対して `asynctkinter2` では独自の物を用いないようにしています。
-そのおかげで `asyncio` や `trio` といった他のasyncライブラリと共存しやくなっています。
 
 ## `asyncio` との共存
 
@@ -133,6 +133,8 @@ async def this_does_not_work():
 async def this_works():
     await asyncio.sleep(1)
     task = asynctkinter2.start(...)
+    e = asynctkinter2.Event()
+    e.fire()
 
 asyncio.create_task(this_works())
 ```
@@ -142,6 +144,8 @@ asyncio.create_task(this_works())
 ```python
 async def this_also_works():
     task = asyncio.create_task(...)
+    e = asyncio.Event()
+    e.set()
     await asynctkinter2.sleep(widget.after, 1000)
 
 asynctkinter2.start(this_also_works())

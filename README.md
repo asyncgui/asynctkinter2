@@ -45,6 +45,7 @@ async def what_you_want_to_do(label):
     await atk.event(label, "<ButtonPress>")
     print("C")
 
+# WARNING: In a real app, you should use "structured concurrency" APIs instead of `start`.
 atk.start(what_you_want_to_do(...))
 ```
 
@@ -118,8 +119,7 @@ if __name__ == "__main__":
 - Uses its own main loop instead of `tkinter`'s built-in `mainloop()`
 - Uses its own timer mechanism instead of `tkinter`'s built-in `after()`
 
-`asynctkinter2`, on the other hand, relies entirely on `tkinter`'s built-in components.
-This makes it much easier to coexist with other async libraries such as `asyncio` or `trio`.
+`asynctkinter2` doesn't do that and relies entirely on `tkinter`'s built-in components.
 
 ## Coexisting with `asyncio`
 
@@ -139,6 +139,8 @@ the `asynctkinter2` side does not involve `async`/`await`:
 async def this_works():
     await asyncio.sleep(1)
     task = asynctkinter2.start(...)
+    e = asynctkinter2.Event()
+    e.fire()
 
 asyncio.create_task(this_works())
 ```
@@ -148,6 +150,8 @@ The next example is also fine because the `asyncio` side does not involve `async
 ```python
 async def this_also_works():
     task = asyncio.create_task(...)
+    e = asyncio.Event()
+    e.set()
     await asynctkinter2.sleep(widget.after, 1000)
 
 asynctkinter2.start(this_also_works())
