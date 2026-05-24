@@ -74,7 +74,7 @@ async def asyncio_anim(root: tk.Tk):
 
 
 async def asynctkinter_anim(root: tk.Tk):
-    sleep = partial(atk.sleep, root)
+    sleep = partial(atk.sleep, root.after)
     label = root.children["top_label"]
     await sleep(1000)
     while True:

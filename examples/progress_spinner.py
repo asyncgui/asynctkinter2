@@ -59,7 +59,7 @@ async def run_progress_spinner(
     try:
         duration_per_phase = int(500. / speed)
         delta_time = int(1000 / fps)
-        sleep = partial(atk.sleep, draw_target, delta_time)
+        sleep = partial(atk.sleep, draw_target.after, delta_time)
         while True:
             next_start = get_next_start()
             next_extent = get_next_extent()

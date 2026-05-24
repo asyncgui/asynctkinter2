@@ -21,7 +21,7 @@ async def async_main(root: tk.Tk):
         await atk.event(label, "<ButtonPress>", filter=lambda e: e.num == 1)
         label["text"] = "Nice!"
 
-        await atk.sleep(root, 1500)
+        await atk.sleep(root.after, 1500)
 
         label["text"] = "Press the right mouse button"
         await atk.event(label, "<ButtonPress-3>")
@@ -29,7 +29,7 @@ async def async_main(root: tk.Tk):
         await atk.event(label, "<ButtonPress>", filter=lambda e: e.num == 3)
         label["text"] = "Great!"
 
-        await atk.sleep(root, 1500)
+        await atk.sleep(root.after, 1500)
 
 
 if __name__ == "__main__":

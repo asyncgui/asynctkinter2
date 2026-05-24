@@ -2,7 +2,6 @@ __all__ = (
     'event', 'event_freq', 'sleep', 'run_in_thread', 'run_in_executor',
 )
 from functools import partial
-from typing import Protocol
 from collections.abc import Awaitable, Callable
 
 from threading import Thread
@@ -103,18 +102,17 @@ class event_freq:
 # Tk Timer
 # ----------------------------------------------------------------------------
 
-class AfterScheduler(Protocol):
-    def after(self, delay_ms: int, func: Callable, *args): ...
-
-
-def sleep(scheduler: AfterScheduler, duration_ms) -> Awaitable:
+def sleep(after: Callable, duration_ms) -> Awaitable:
     '''
     .. code-block::
 
-        await sleep(widget, 1000)  # Sleeps for 1000 milliseconds
+        await sleep(widget.after, 1000)  # Sleeps for 1000 milliseconds
+
+    .. versionchanged:: 0.2.0
+        The API now requires an ``after`` method instead of a widget.
     '''
     ee = ExclusiveEvent()
-    scheduler.after(duration_ms, ee.fire)
+    after(duration_ms, ee.fire)
     return ee.wait()
 
 
@@ -123,16 +121,19 @@ def sleep(scheduler: AfterScheduler, duration_ms) -> Awaitable:
 # ----------------------------------------------------------------------------
 
 
-async def run_in_thread(scheduler: AfterScheduler, func, *, daemon=None, polling_interval_ms=1000):
+async def run_in_thread(after: Callable, func, *, daemon=None, polling_interval_ms=1000):
     '''
     Creates a new thread, runs the given function within it, then waits for the completion of the function.
 
     .. code-block::
 
-        return_value = await run_in_thread(widget, func)
+        return_value = await run_in_thread(widget.after, func)
 
     .. warning::
         When the caller Task is cancelled, the ``func`` will be left running, which violates "structured concurrency".
+
+    .. versionchanged:: 0.2.0
+        The API now requires an ``after`` method instead of a widget.
     '''
     return_value = None
     exc = None
@@ -150,13 +151,13 @@ async def run_in_thread(scheduler: AfterScheduler, func, *, daemon=None, polling
     Thread(target=wrapper, daemon=daemon, name="asynctkinter2.run_in_thread").start()
     _sleep = sleep
     while not done:
-        await _sleep(scheduler, polling_interval_ms)
+        await _sleep(after, polling_interval_ms)
     if exc is not None:
         raise exc
     return return_value
 
 
-async def run_in_executor(executer: ThreadPoolExecutor, scheduler: AfterScheduler, func, *, polling_interval_ms=1000):
+async def run_in_executor(executer: ThreadPoolExecutor, after: Callable, func, *, polling_interval_ms=1000):
     '''
     Runs the given function within the given :class:`concurrent.futures.ThreadPoolExecutor`,
     then waits for the completion of the function.
@@ -165,11 +166,14 @@ async def run_in_executor(executer: ThreadPoolExecutor, scheduler: AfterSchedule
 
         executor = ThreadPoolExecutor()
         ...
-        return_value = await run_in_executor(executor, widget, func)
+        return_value = await run_in_executor(executor, widget.after, func)
 
     .. warning::
         When the caller Task is cancelled, the ``func`` will be left running if it has already started,
         which violates "structured concurrency".
+
+    .. versionchanged:: 0.2.0
+        The API now requires an ``after`` method instead of a widget.
     '''
     return_value = None
     exc = None
@@ -188,7 +192,7 @@ async def run_in_executor(executer: ThreadPoolExecutor, scheduler: AfterSchedule
     try:
         _sleep = sleep
         while not done:
-            await _sleep(scheduler, polling_interval_ms)
+            await _sleep(after, polling_interval_ms)
     except Cancelled:
         future.cancel()
         raise

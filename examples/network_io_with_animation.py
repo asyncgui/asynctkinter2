@@ -39,14 +39,14 @@ async def async_main(root: tk.Tk):
         with requests.Session() as session:
             label["text"] = "first request..."
             await atk.run_in_thread(
-                root,
+                root.after,
                 lambda: session.get("https://httpbin.org/delay/2"),
                 daemon=True,
                 polling_interval_ms=400,
             )
             label["text"] = "second request..."
             await atk.run_in_thread(
-                root,
+                root.after,
                 lambda: session.get("https://httpbin.org/delay/2"),
                 daemon=True,
                 polling_interval_ms=400,
