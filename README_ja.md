@@ -51,7 +51,7 @@ atk.start(やりたき事(...))
 マイナーバージョンまでを固定してください。
 
 ```text
-pip install "asynctkinter2>=0.1,<0.2"
+pip install "asynctkinter2>=0.2,<0.3"
 ```
 
 ## 使用例
