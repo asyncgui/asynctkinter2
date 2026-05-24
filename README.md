@@ -54,7 +54,7 @@ atk.start(what_you_want_to_do(...))
 Pin the minor version.
 
 ```text
-pip install "asynctkinter2>=0.1,<0.2"
+pip install "asynctkinter2>=0.2,<0.3"
 ```
 
 ## Example
