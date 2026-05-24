@@ -3,6 +3,7 @@ from functools import cached_property
 import tkinter as tk
 from tkinter import ttk, messagebox
 import asynctkinter2 as atk
+from asynctkinter2._tkinter_stuff import sleep
 
 
 def main():
@@ -45,13 +46,13 @@ class App:
         scene.children["top_label"]["text"] = f"Your BMI is {bmi:.2f}\nYou are"
         scene.children["bottom_label"]["text"] = result
         await atk.wait_any(
-            atk.sleep(root, 3000),
+            atk.sleep(root.after, 3000),
             atk.event(root, "<ButtonPress>"),
         )
         scene.children["top_label"]["text"] = ""
         scene.children["bottom_label"]["text"] = "bye"
         await atk.wait_any(
-            atk.sleep(root, 3000),
+            atk.sleep(root.after, 3000),
             atk.event(root, "<ButtonPress>"),
         )
         scene.pack_forget()

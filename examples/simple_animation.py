@@ -11,7 +11,7 @@ def main():
 
 
 async def async_main(root: tk.Tk):
-    sleep = partial(atk.sleep, root)
+    sleep = partial(atk.sleep, root.after)
     root.title("Animation")
     root.geometry("800x200")
     label = tk.Label(root, text="Hello", font=(None, 80))

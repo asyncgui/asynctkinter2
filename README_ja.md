@@ -35,7 +35,7 @@ import asynctkinter2 as atk
 
 async def やりたき事(label):
     print('A')
-    await atk.sleep(label, 1000)
+    await atk.sleep(label.after, 1000)
     print('B')
     await atk.event(label, "<ButtonPress>")
     print('C')
@@ -68,11 +68,12 @@ def main():
 
 
 async def async_main(root: tk.Tk):
+    sleep = partial(atk.sleep, root.after)
     label = tk.Label(root, text='Hello', font=('', 80))
     label.pack()
 
     # 二秒待つ
-    await atk.sleep(root, 2000)
+    await sleep(2000)
 
     # labelが押されるのを待つ
     event = await atk.event(label, "<ButtonPress>")
@@ -80,7 +81,7 @@ async def async_main(root: tk.Tk):
 
     # labelが押される か 5秒経つまで待つ。
     tasks = await atk.wait_any(
-        atk.sleep(root, 5000),
+        sleep(5000),
         atk.event(label, "<ButtonPress>"),
     )
     if tasks[0].finished:
@@ -91,13 +92,13 @@ async def async_main(root: tk.Tk):
 
     # labelが押され なおかつ 5秒経つまで待つ
     tasks = await atk.wait_all(
-        atk.sleep(root, 5000),
+        sleep(5000),
         atk.event(label, "<ButtonPress>"),
     )
 
     # GUIを固まらせずにHTTPリクエストを実行し、その完了を待つ
     import requests
-    res: requests.Response = await atk.run_in_thread(root, lambda: requests.get("https://httpbin.org/delay/2"))
+    res: requests.Response = await atk.run_in_thread(root.after, lambda: requests.get("https://httpbin.org/delay/2"))
     label["text"] = f"{res.status_code = }"
 
 
@@ -122,7 +123,7 @@ if __name__ == "__main__":
 ```python
 async def this_does_not_work():
     await asyncio.sleep(1)
-    await asynctkinter2.sleep(widget, 1000)
+    await asynctkinter2.sleep(widget.after, 1000)
 ``` 
 
 ここで言う "async処理" というのは予約語の `async` や `await` を含む処理だけを指します。
@@ -141,7 +142,7 @@ asyncio.create_task(this_works())
 ```python
 async def this_also_works():
     task = asyncio.create_task(...)
-    await asynctkinter2.sleep(widget, 1000)
+    await asynctkinter2.sleep(widget.after, 1000)
 
 asynctkinter2.start(this_also_works())
 ```

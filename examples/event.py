@@ -18,7 +18,7 @@ async def async_main(root: tk.Tk):
         label["text"] = "Click anywhere!"
         e = await atk.event(label, "<ButtonPress>")
         label["text"] = f"You clicked at pos ({e.x}, {e.y})"
-        await atk.sleep(root, 1500)
+        await atk.sleep(root.after, 1500)
 
 
 if __name__ == "__main__":

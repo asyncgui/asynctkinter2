@@ -40,7 +40,7 @@ import asynctkinter2 as atk
 
 async def what_you_want_to_do(label):
     print("A")
-    await atk.sleep(label, 1000)
+    await atk.sleep(label.after, 1000)
     print("B")
     await atk.event(label, "<ButtonPress>")
     print("C")
@@ -59,6 +59,7 @@ pip install "asynctkinter2>=0.1,<0.2"
 ## Example
 
 ```python
+from functools import partial
 import tkinter as tk
 import asynctkinter2 as atk
 
@@ -71,11 +72,12 @@ def main():
 
 
 async def async_main(root: tk.Tk):
+    sleep = partial(atk.sleep, root.after)
     label = tk.Label(root, text='Hello', font=('', 80))
     label.pack()
 
     # Waits for 2 seconds to elapse.
-    await atk.sleep(root, 2000)
+    await sleep(2000)
 
     # Waits for a label to be pressed.
     event = await atk.event(label, "<ButtonPress>")
@@ -84,7 +86,7 @@ async def async_main(root: tk.Tk):
     # Waits for either 5 seconds to elapse or a label to be pressed.
     # i.e. Waits at most 5 seconds for a label to be pressed.
     tasks = await atk.wait_any(
-        atk.sleep(root, 5000),
+        sleep(5000),
         atk.event(label, "<ButtonPress>"),
     )
     if tasks[0].finished:
@@ -95,14 +97,14 @@ async def async_main(root: tk.Tk):
 
     # Waits for both 5 seconds to elapse and a label to be pressed.
     tasks = await atk.wait_all(
-        atk.sleep(root, 5000),
+        sleep(5000),
         atk.event(label, "<ButtonPress>"),
     )
 
     # Performs an HTTP request without freezing the UI, then waits for completion.
     import requests
     res: requests.Response = await atk.run_in_thread(
-        root, lambda: requests.get("https://httpbin.org/delay/2"))
+        root.after, lambda: requests.get("https://httpbin.org/delay/2"))
 
 
 if __name__ == "__main__":
@@ -126,7 +128,7 @@ Coexistence does come with one important limitation: you cannot mix `asyncio` as
 ```python
 async def this_does_not_work():
     await asyncio.sleep(1)
-    await asynctkinter2.sleep(widget, 1000)
+    await asynctkinter2.sleep(widget.after, 1000)
 ```
 
 "Async operation" here means only code that uses the Python keywords `async` or `await`.
@@ -146,7 +148,7 @@ The next example is also fine because the `asyncio` side does not involve `async
 ```python
 async def this_also_works():
     task = asyncio.create_task(...)
-    await asynctkinter2.sleep(widget, 1000)
+    await asynctkinter2.sleep(widget.after, 1000)
 
 asynctkinter2.start(this_also_works())
 ```
