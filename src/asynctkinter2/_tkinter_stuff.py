@@ -185,24 +185,15 @@ async def run_in_executor(executor: ThreadPoolExecutor, after: Callable, func):
         finally:
             after(0, result_event.fire, return_value, exc)
 
-    future = executor.submit(wrapper)
+    future = executor.submit(func)  # deals with both cases return value and exception
+    future.add_done_callback(partial(after, 0, event.fire))
     try:
-        return_value, exc = await result_event.wait()
+        fut = await event.wait_args_0()  # parameter of event.fire above, passed in by add_done_callback()
+        assert fut is future
+        return fut.result()
     except Cancelled:
         future.cancel()
         raise
-    if exc is not None:
-        raise exc
-    return return_value
-    # This code is in line with the thread code above.
-    # An alternative would be to use future.add_done_callback():
-    #
-    # future = executor.submit(func) # deals with both cases return value and exception
-    # future.add_done_callback(partial(after, 0, event.fire))
-    # fut = await event.wait_args_0()  # parameter of event.fire above
-    # assert fut is future
-    # return fut.result()
-    # In this case, the wrapper can be omitted.
 
 
 # ----------------------------------------------------------------------------
