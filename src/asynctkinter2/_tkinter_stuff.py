@@ -8,7 +8,7 @@ from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 import tkinter
 
-from asyncgui import ExclusiveEvent, Cancelled
+from asyncgui import ExclusiveEvent, StatefulEvent, Cancelled
 
 
 # ----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ def sleep(after: Callable, duration_ms) -> Awaitable:
 # ----------------------------------------------------------------------------
 
 
-async def run_in_thread(after: Callable, func, *, daemon=None, polling_interval_ms=1000):
+async def run_in_thread(after: Callable, func, *, daemon=None):
     '''
     Creates a new thread, runs the given function within it, then waits for the completion of the function.
 
@@ -135,29 +135,27 @@ async def run_in_thread(after: Callable, func, *, daemon=None, polling_interval_
     .. versionchanged:: 0.2.0
         The API now requires an ``after`` method instead of a widget.
     '''
-    return_value = None
-    exc = None
-    done = False
+
+    result_event = StatefulEvent()
 
     def wrapper():
-        nonlocal return_value, done, exc
+        return_value = None
+        exc = None
         try:
             return_value = func()
         except Exception as e:
             exc = e
         finally:
-            done = True
+            after(0, result_event.fire, return_value, exc)
 
     Thread(target=wrapper, daemon=daemon, name="asynctkinter2.run_in_thread").start()
-    _sleep = sleep
-    while not done:
-        await _sleep(after, polling_interval_ms)
+    return_value, exc = await result_event.wait()
     if exc is not None:
         raise exc
     return return_value
 
 
-async def run_in_executor(executer: ThreadPoolExecutor, after: Callable, func, *, polling_interval_ms=1000):
+async def run_in_executor(executor: ThreadPoolExecutor, after: Callable, func):
     '''
     Runs the given function within the given :class:`concurrent.futures.ThreadPoolExecutor`,
     then waits for the completion of the function.
@@ -175,30 +173,36 @@ async def run_in_executor(executer: ThreadPoolExecutor, after: Callable, func, *
     .. versionchanged:: 0.2.0
         The API now requires an ``after`` method instead of a widget.
     '''
-    return_value = None
-    exc = None
-    done = False
+    result_event = StatefulEvent()
 
     def wrapper():
-        nonlocal return_value, done, exc
+        return_value = None
+        exc = None
         try:
             return_value = func()
         except Exception as e:
             exc = e
         finally:
-            done = True
+            after(0, result_event.fire, return_value, exc)
 
-    future = executer.submit(wrapper)
+    future = executor.submit(wrapper)
     try:
-        _sleep = sleep
-        while not done:
-            await _sleep(after, polling_interval_ms)
+        return_value, exc = await result_event.wait()
     except Cancelled:
         future.cancel()
         raise
     if exc is not None:
         raise exc
     return return_value
+    # This code is in line with the thread code above.
+    # An alternative would be to use future.add_done_callback():
+    #
+    # future = executor.submit(func) # deals with both cases return value and exception
+    # future.add_done_callback(partial(after, 0, event.fire))
+    # fut = await event.wait_args_0()  # parameter of event.fire above
+    # assert fut is future
+    # return fut.result()
+    # In this case, the wrapper can be omitted.
 
 
 # ----------------------------------------------------------------------------
