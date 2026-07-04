@@ -1,6 +1,6 @@
 [project]
 name = "asynctkinter2"
-version = "0.2.0"
+version = "0.2.1.dev0"
 description = "Async library for Tkinter"
 authors = [{ name = "Nattōsai Mitō", email = "flow4re2c@gmail.com" }]
 license = "MIT"
