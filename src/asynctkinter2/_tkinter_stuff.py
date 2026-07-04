@@ -5,7 +5,7 @@ from functools import partial
 from collections.abc import Awaitable, Callable
 
 from threading import Thread
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor
 import tkinter
 
 from asyncgui import ExclusiveEvent, Cancelled
@@ -157,9 +157,9 @@ async def run_in_thread(after: Callable, func, *, daemon=None, polling_interval_
     return return_value
 
 
-async def run_in_executor(executer: ThreadPoolExecutor, after: Callable, func, *, polling_interval_ms=1000):
+async def run_in_executor(executer: Executor, after: Callable, func, *, polling_interval_ms=1000):
     '''
-    Runs the given function within the given :class:`concurrent.futures.ThreadPoolExecutor`,
+    Runs the given function within the given :class:`concurrent.futures.Executor`,
     then waits for the completion of the function.
 
     .. code-block::
@@ -168,37 +168,31 @@ async def run_in_executor(executer: ThreadPoolExecutor, after: Callable, func, *
         ...
         return_value = await run_in_executor(executor, widget.after, func)
 
+    :param func:
+        The function to run within the executor.
+        It cannot be a lambda if the executor is a ``ProcessPoolExecutor``.
+        Any modules used by the function must be imported within the function
+        itself if the executor is a ``InterpreterPoolExecutor``.
+
     .. warning::
         When the caller Task is cancelled, the ``func`` will be left running if it has already started,
         which violates "structured concurrency".
 
     .. versionchanged:: 0.2.0
         The API now requires an ``after`` method instead of a widget.
+
+    .. versionchanged:: 0.2.1
+        Added support for ``ProcessPoolExecutor`` and ``InterpreterPoolExecutor``
     '''
-    return_value = None
-    exc = None
-    done = False
-
-    def wrapper():
-        nonlocal return_value, done, exc
-        try:
-            return_value = func()
-        except Exception as e:
-            exc = e
-        finally:
-            done = True
-
-    future = executer.submit(wrapper)
+    future = executer.submit(func)
     try:
         _sleep = sleep
-        while not done:
+        while not future.done():
             await _sleep(after, polling_interval_ms)
     except Cancelled:
         future.cancel()
         raise
-    if exc is not None:
-        raise exc
-    return return_value
+    return future.result()
 
 
 # ----------------------------------------------------------------------------
